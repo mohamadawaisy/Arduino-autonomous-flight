@@ -1,0 +1,9 @@
+don't change "hello_world - Copy" 
+you can edit "hello_world" it's the same project the previous one is backup.
+
+ABOUT ARDUINO PROJECT:
+main componenets:
+1.PIXY CAM - its simply a library that we use to connect pixy cam to arduino. 
+2.PID ALGORITHM - Control the drone, we set target and current position, the algorithm output is correction value.
+3.SERVO MOTOR - Control joystick...
+
