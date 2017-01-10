@@ -26,7 +26,7 @@ connect the arduino with your computer with usb cable.
 run arduino studio, open your arduino code.
 press options, choose the COM you already connect your arduino with.
 press Run\play.
-press on the monitor in the left side and you shuld see the out put.
+press on the monitor in the right side and you shuld see the out put.
 
 optional:
 open C# project and put the COM you choose in the Openport function and run it.
