@@ -2,8 +2,35 @@ don't change "hello_world - Copy"
 you can edit "hello_world" it's the same project the previous one is backup.
 
 ABOUT ARDUINO PROJECT:
-main componenets:
+main componenets of arduino code:
 1.PIXY CAM - its simply a library that we use to connect pixy cam to arduino. 
 2.PID ALGORITHM - Control the drone, we set target and current position, the algorithm output is correction value.
 3.SERVO MOTOR - Control joystick...
 
+DOCUMENTATION:
+
+install arduino studio:
+https://www.arduino.cc/en/Main/Software
+
+install PixyMon:
+http://www.cmucam.org/projects/cmucam5/wiki/Install_PixyMon_on_Windows_Vista_7_8
+
+tutorial;
+http://cmucam.org/projects/cmucam5/wiki/Hooking_up_Pixy_to_a_Microcontroller_(like_an_Arduino)
+
+steps to run the project:
+connect pixy cam with your computer open PixyMon set color signature.
+disconnecy the pixy cam from your computer.
+connect pixy cam with your arduino by serial cable.
+connect the arduino with your computer with usb cable.
+run arduino studio, open your arduino code.
+press options, choose the COM you already connect your arduino with.
+press Run\play.
+press on the monitor in the left side and you shuld see the out put.
+
+optional:
+open C# project and put the COM you choose in the Openport function and run it.
+you should see the current position in realtime.
+
+important:
+stop monitoring from arduino studio when start running c# project to avoid clash ,because both use the same serial port.
