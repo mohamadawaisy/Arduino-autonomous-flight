@@ -30,12 +30,12 @@ int e;
 int y;
 double Setpoint, Input, Output;
 
-double aggKp = 0.09, aggKi = 0.03, aggKd = 0.02;
+double aggKp = 0.08, aggKi = 0.09, aggKd = 0.03;
 
-//double consKp = 0.06, consKi = 0.07, consKd = 0.05;
+double consKp = 0.06, consKi = 0.07, consKd = 0.05;
 
 
-PID myPID(&Input, &Output, &Setpoint, aggKp, aggKi, aggKd, DIRECT);
+PID myPID(&Input, &Output, &Setpoint, consKp, consKi, consKd, DIRECT);
 int target = 120;
 void setup()
 {
@@ -117,8 +117,23 @@ void loop()
 
 
 
-          
-          
+          if (gap < 5)
+          { //we're close to setpoint, use conservative tuning parameters
+            Serial.print("\n  GAP:");
+            myPID.SetTunings(consKp, consKi, consKd);
+            if (UpFlag)
+            {
+              UpCorr = middleLIMIT - Output;
+              Yservo.write(UpCorr);  // the 0 means GO up faster
+            } else
+            {
+              Output = Output / 2;
+              DownCorr = middleLIMIT + Output;
+              Yservo.write(DownCorr);  //the endLimit means go down faster
+            }
+          }
+          else
+          {
             //we're far from setpoint, use aggressive tuning parameters
             myPID.SetTunings(aggKp, aggKi, aggKd);
             if (UpFlag)
@@ -131,7 +146,7 @@ void loop()
               DownCorr = middleLIMIT + Output;
               Yservo.write(DownCorr);  //the endLimit means go down faster
             }
-          
+          }
 
           TempY = y;
           if (y > Setpoint)
