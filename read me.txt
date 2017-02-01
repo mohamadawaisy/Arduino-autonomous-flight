@@ -34,3 +34,7 @@ you should see the current position in realtime.
 
 important:
 stop monitoring from arduino studio when start running c# project to avoid clash ,because both use the same serial port.
+
+LINKES:
+PID taturial
+http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-introduction/

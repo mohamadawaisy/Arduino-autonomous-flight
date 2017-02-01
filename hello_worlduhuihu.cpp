@@ -30,6 +30,7 @@ int DownCorr;
 int TempY;
 int avg = 0;
 float pos = 0;
+float prevCorr = 0;
 
 static int i = 0;
 int flag = 1;
@@ -43,7 +44,7 @@ int avgY;
 double Setpoint, Input, Output;
 
 
-int target = 120;
+int target = 60;
 void setup()
 {
 	// tell servo to go to position in variable 'pos'
@@ -85,7 +86,7 @@ void loop()
 	blocks = pixy.getBlocks();
 
 	// If there are detect blocks, print them!
-	prevY = (y+prevY)/2;
+	prevY = (y + prevY) / 2;
 	if (blocks)
 	{
 		i++;
@@ -93,7 +94,7 @@ void loop()
 			//sprintf(buf, "Detected %d:\n", blocks);
 			for (j = 0; j < blocks; j++)
 			{
-			//	sprintf(buf, "  block %d: ", j);
+				//  sprintf(buf, "  block %d: ", j);
 
 				y = pixy.blocks[j].y;
 				{
@@ -121,13 +122,13 @@ void loop()
 
 					if (UpTarget)
 					{
-						UpCorr =middleLIMIT-correction / 3;
+						UpCorr = middleLIMIT - correction / 3;
 						Yservo.write(UpCorr);  // the 0 means GO up faster
 					}
 					else
 					{
 
-						DownCorr = middleLIMIT- correction;
+						DownCorr = middleLIMIT - correction;
 						Yservo.write(DownCorr);  //the endLimit means go down faster
 					}
 
@@ -169,26 +170,37 @@ void initializeDroneConnection(int pin)
 void InitializeController(int min, int max, Servo Yservo, int* middleLIMIT)
 {
 	startLIMIT = min;         //the joystick limits
-	//checkBattaryLevel(middleLIMIT, Yservo);
+	checkBattaryLevel(middleLIMIT, Yservo);
 	endLIMIT = max;
 }
 
 void checkBattaryLevel(int* middleLIMIT, Servo Yservo)
 {
-	while (!isUp())
+
+	int temp = 90;
+
+	while (!isUp() && temp>startLIMIT)
 	{
-		*middleLIMIT--;
-		Yservo.write(*middleLIMIT - 1);  // the 0 means GO up faster
-		delay(500);
+		blocks = pixy.getBlocks();
+		if (blocks)
+		{
+			y = pixy.blocks[0].y;
+			y = 199 - y;
+		}
+
+		temp--;
+		Yservo.write(temp - 1);  // the 0 means GO up faster
+		delay(270);
 	}
-	Yservo.write(*middleLIMIT - 4);
+	Yservo.write(*middleLIMIT - 2);
 	sprintf(buf, "\n***  checkBattaryLevel finished successfully middleLIMIT is: %d: ***\n", *middleLIMIT);
 	Serial.print(buf);
+	*middleLIMIT = temp - 2;
 }
 
 int isUp()
 {
-	if ((y - prevY)>5)
+	if ((y - prevY)>3)
 		return 1;
 	else
 		return 0;
@@ -196,6 +208,7 @@ int isUp()
 
 void CalculateCorr(float* Corr)
 {
+
 	float Afactor;
 	if (y>target)
 		UpTarget = 1;
@@ -207,13 +220,13 @@ void CalculateCorr(float* Corr)
 		if (isUp())
 		{
 			Afactor = (y - target);
-			*Corr = -(Afactor / 5) + 1;
+			*Corr = -((Afactor / 7)*0.8 + prevCorr*0.2) / 2;
 			//Afactor=(y-prevY);
 			//*Corr=*Corr*(Afactor/2);
 		}
 		else {
 			Afactor = (y - target);
-			*Corr = -(Afactor / 5) + 1;
+			*Corr = -((Afactor / 10)*0.8 + prevCorr*0.2) / 2;
 		}
 		if (*Corr<-15)
 		{
@@ -225,20 +238,21 @@ void CalculateCorr(float* Corr)
 		if (isUp())
 		{
 			Afactor = (target - y);
-			*Corr = +(Afactor / 5) + 1;
+			*Corr = +((Afactor / 5)*0.5 + prevCorr*0.5) / 2;
 			//Afactor=(y-prevY);
 			//*Corr=*Corr*(Afactor/2);
 		}
 		else
 		{
 			Afactor = (target - y);
-			*Corr = +(Afactor / 5) + 1;
+			*Corr = +((Afactor / 2.6));
 		}
 		if (*Corr>15)
 		{
 			*Corr = 15;
 		}
 	}
+	prevCorr = *Corr;
 }
 
 
