@@ -22,7 +22,7 @@ int UpTarget = 1;
 int RightTarget = 1;
 int DetectFlag=0;
 double SetpointX,OutputY,OutputX,x,y;
-double SetpointY=160;
+double SetpointY=120;
 //***********Global Params***********\\
 
 
@@ -32,8 +32,9 @@ uint16_t blocks;
 char buf[200];
 int UpCorr;
 int DownCorr;
-
-double aggKp = 0.1, aggKi = 1, aggKd = 0.04;
+int startY;
+//double aggKp = 0.09, aggKi = 0.15, aggKd = 0.03;
+//double aggKp = 0.1, aggKi = 1, aggKd = 0.04;
 //double aggKp = 0.09, aggKi =0 , aggKd =0 ;
 //0.03   0.02
 //***********Local Params***********\\
@@ -48,9 +49,10 @@ double aggKp = 0.1, aggKi = 1, aggKd = 0.04;
 int TempY;
 int avg = 0;
 
-//double consKp = 0.06, consKi = 0.07, consKd = 0.05;
+//double consKp = 0.06, consKi = 0.09, consKd = 0.01;
 
-
+double aggKp=4, aggKi=0.3, aggKd=1;
+double consKp=1, consKi=0.05, consKd=0.25;
 PID myPIDy(&y, &OutputY, &SetpointY, aggKp, aggKi, aggKd, DIRECT);
 PID myPIDx(&x, &OutputX, &SetpointX, aggKp, aggKi, aggKd, DIRECT);
 int target = 120;
@@ -81,8 +83,8 @@ void setup()
   pixy.init();
   SetpointY = target;
   //turn the PID on
-  myPIDy.SetOutputLimits(-15, 15);
-  myPIDy.SetSampleTime(20);
+  myPIDy.SetOutputLimits(-10, 10);
+  myPIDy.SetSampleTime(30);
   myPIDy.SetMode(AUTOMATIC);
 
   myPIDx.SetOutputLimits(-5, 5);
@@ -93,6 +95,7 @@ void setup()
   
   while(!DetectFlag)
   {
+     PrintToSerial("wait DetectFlag..");
     GetInput();
   }
   Xservo.attach(8);
@@ -139,9 +142,12 @@ void loop()
 
             //we're far from SetpointY, use aggressive tuning parameters
             //myPIDy.SetTunings(aggKp, aggKi, aggKd);
-            if (UpTarget)
+              
+      
+  
+            if (OutputY<=0)
             {
-              UpCorr = YmiddleLIMIT - OutputY/3.5;
+              UpCorr = YmiddleLIMIT - OutputY/3.2;
               Yservo.write(UpCorr);  // the 0 means GO up faster
             } else
             {
@@ -168,6 +174,18 @@ void loop()
        //   {
        //     y = SetpointY - (y - SetpointY); // PROBLEM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        //   }
+
+           double gap = abs(SetpointY-y); //distance away from setpoint
+         
+  if (gap < 20)
+  {  //we're close to setpoint, use conservative tuning parameters
+    myPIDy.SetTunings(consKp, consKi, consKd);
+  }
+  else
+  {
+     //we're far from setpoint, use aggressive tuning parameters
+     myPIDy.SetTunings(aggKp, aggKi, aggKd);
+  }
           if (myPIDy.Compute() == true)
           {
        //     y = TempY;
@@ -179,7 +197,7 @@ void loop()
             sprintf(buf, "Data, Y:%d  ,SetpointY:%d  ,correction:%d  ,UpTarget:%d  ,DetectFlag:%d ", (int)y, (int)SetpointY, (int)OutputY, UpTarget,DetectFlag);
              PrintToSerial(buf);
             
-            sprintf(buf, "%03d %03d %03d\n", y, (int)SetpointY, (int)OutputY);
+            sprintf(buf, "%03d %03d %03d\n", (int)y, (int)SetpointY, (int)OutputY);
             Serial.print(buf);
 
 
@@ -199,27 +217,38 @@ void servoMove(float up)
 
 void checkBattaryLevel(int* YmiddleLIMIT, Servo Yservo)
 {
-  
+  PrintToSerial("start check batary");
   int temp= 90;
   TempY=y;
-  while (!isUp()&&temp>YstartLIMIT)
+  startY=y;
+  while (!isUp2()&&temp>YstartLIMIT)
   {
+    PrintToSerial("wait up..");
       GetInput();
       temp--;
-      Yservo.write(temp );  // the 0 means GO up faster
-      delay(1000);
+      Yservo.write(temp -1);  // the 0 means GO up faster
+      delay(300);
   }
   *YmiddleLIMIT=temp;
  // Yservo.write(*YmiddleLIMIT);
   sprintf(buf, "***  checkBattaryLevel finished successfully YmiddleLIMIT is: %d: ***", *YmiddleLIMIT);
   PrintToSerial(buf);
-  *YmiddleLIMIT=temp;
+  sprintf(buf, "");
+  
+ 
 }
-
+int isUp2()
+{
+   
+  if ((y - startY)>3)
+    return 1;
+  else
+    return 0;
+}
 int isUp()
 {
    
-  if ((y - TempY)>1)
+  if ((y - TempY)>5)
     return 1;
   else
     return 0;
@@ -241,6 +270,8 @@ int GetInput()
           
         x = pixy.blocks[j].x;
       }
+       sprintf(buf, "Data, Y:%d  ,SetpointY:%d  ,correction:%d  ,UpTarget:%d  ,DetectFlag:%d ***", (int)y, (int)SetpointY, (int)OutputY, UpTarget,DetectFlag);
+             PrintToSerial(buf);
    }
    else
    {
@@ -257,7 +288,7 @@ void CantDetect()
 {
   int TempCorr;
   PrintToSerial("CAN'T DITECT THE DRONE !!!!!");
-  //UpTarget=0;
+  UpTarget=0;
   TempCorr = YmiddleLIMIT+2 ;
   Yservo.write(TempCorr);  //the YendLIMIT means go down faster
   
